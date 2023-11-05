@@ -77,7 +77,7 @@ Image for better understanding
 - then run npm install (to install all packages used in this project)
 - then run npm run start
 - go to the link shown in the terminal all api docs are there
-- you can use postman as well, i have attached one postman-collection
+- you can use postman as well, i have attached one postman-collection (update soon)
   import and change accordingly base on api docs
 - Now you are good to go
 - Thank YOU

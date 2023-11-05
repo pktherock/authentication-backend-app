@@ -1,0 +1,26 @@
+import jwt from "jsonwebtoken";
+import config from "../config/config.js";
+
+const {
+  jwtAccessSecret,
+  jwtRefreshSecret,
+  jwtAccessTimeOut,
+  jwtRefreshTimeOut,
+} = config;
+
+const generateAccessToken = (payload) => {
+  const token = jwt.sign(payload, jwtAccessSecret, {
+    expiresIn: jwtAccessTimeOut, // 15 min
+  });
+  return token;
+};
+
+const generateRefreshToken = (payload) => {
+  const token = jwt.sign(payload, jwtRefreshSecret, {
+    expiresIn: jwtRefreshTimeOut, // 1 day
+  });
+
+  return token;
+};
+
+export { generateAccessToken, generateRefreshToken };

@@ -1,4 +1,4 @@
 import authRouter from "./routes/auth.routes.js";
-import userService from "./services/user.service.js"
+import authService from "./services/auth.service.js"
 
-export { authRouter, userService };
+export { authRouter, authService };

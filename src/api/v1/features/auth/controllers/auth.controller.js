@@ -2,14 +2,14 @@ import STATUS_CODE from "../../../../../constants/statusCode.js";
 import destroySession from "../../../../../helpers/destroySession.js";
 import sendEmail from "../../../../../utils/sendEmail.js";
 import { CustomError } from "../../../../common/middlewares/error.middleware.js";
-import userService from "../services/user.service.js";
+import authService from "../services/auth.service.js";
 import asyncHandler from "express-async-handler";
 
 class AuthController {
   postLogin = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
 
-    const token = await userService.loginUser({ email, password });
+    const token = await authService.loginUser({ email, password });
 
     // set access token and refresh token in session
     const { accessToken, refreshToken, userId } = token;
@@ -27,7 +27,7 @@ class AuthController {
   postRegister = asyncHandler(async (req, res) => {
     const { userName, email, password } = req.body;
 
-    const newUser = await userService.createUser({ userName, email, password });
+    const newUser = await authService.createUser({ userName, email, password });
 
     sendEmail(
       newUser.email,
@@ -43,7 +43,7 @@ class AuthController {
 
   getUserVerificationStatus = asyncHandler(async (req, res) => {
     const { userId } = req.params;
-    const isVerified = await userService.verificationStatus(userId);
+    const isVerified = await authService.verificationStatus(userId);
 
     return res.status(STATUS_CODE.OK).json({
       success: true,
@@ -53,7 +53,7 @@ class AuthController {
 
   postUserVerificationStatus = asyncHandler(async (req, res) => {
     const { userId } = req.params;
-    const verifiedUser = await userService.verifyUser(userId);
+    const verifiedUser = await authService.verifyUser(userId);
 
     return res.status(STATUS_CODE.OK).json(verifiedUser);
   });
@@ -92,7 +92,7 @@ class AuthController {
       }
     });
 
-    const updateUser = await userService.updateUser(userId, updateInfo);
+    const updateUser = await authService.updateUser(userId, updateInfo);
 
     return res.status(STATUS_CODE.OK).json(updateUser);
   });
@@ -106,7 +106,7 @@ class AuthController {
       );
     }
 
-    const resetLink = await userService.requestPasswordReset(email);
+    const resetLink = await authService.requestPasswordReset(email);
 
     return res.status(STATUS_CODE.OK).json({ success: true, resetLink });
   });
@@ -120,7 +120,7 @@ class AuthController {
       );
     }
 
-    const tokenValid = await userService.isResetPasswordTokenValid(
+    const tokenValid = await authService.isResetPasswordTokenValid(
       token,
       userId
     );
@@ -130,7 +130,7 @@ class AuthController {
 
   postResetPassword = asyncHandler(async (req, res) => {
     const { token, userId, password } = req.body;
-    const success = await userService.resetPassword({
+    const success = await authService.resetPassword({
       token,
       userId,
       password,
@@ -152,7 +152,7 @@ class AuthController {
         .json({ success: false, message: "password is required." });
     }
 
-    const deletedUser = await userService.deleteUser(email, password);
+    const deletedUser = await authService.deleteUser(email, password);
     await destroySession(req);
     res.clearCookie("connect.sid");
 

@@ -19,7 +19,7 @@ import {
 } from "../../../../../helpers/token.js";
 import USER_ROLE from "../../../../../constants/userRole.js";
 
-class UserService {
+class AuthService {
   createUser = async (userInfo) => {
     // 1. extract all info
     const { userName, email, password } = userInfo;
@@ -264,5 +264,5 @@ class UserService {
   };
 }
 
-const userService = new UserService();
-export default userService;
+const authService = new AuthService();
+export default authService;

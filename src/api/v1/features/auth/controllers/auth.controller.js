@@ -1,9 +1,11 @@
-import STATUS_CODE from "../../../../../constants/statusCode.js";
+import asyncHandler from "express-async-handler";
+
+import { CustomError } from "../../../../common/middlewares/error.middleware.js";
 import destroySession from "../../../../../helpers/destroySession.js";
 import sendEmail from "../../../../../utils/sendEmail.js";
-import { CustomError } from "../../../../common/middlewares/error.middleware.js";
+import ApiResponse from "../../../../../utils/ApiResponse.js";
+import STATUS_CODE from "../../../../../constants/statusCode.js";
 import authService from "../services/auth.service.js";
-import asyncHandler from "express-async-handler";
 
 class AuthController {
   postLogin = asyncHandler(async (req, res) => {
@@ -19,9 +21,13 @@ class AuthController {
     req.session.userId = userId;
 
     // if you are creating Only API then return this
-    return res
-      .status(STATUS_CODE.OK)
-      .json({ message: "Successfully Logged In", ...token });
+
+    const response = new ApiResponse(
+      STATUS_CODE.OK,
+      token,
+      "Successfully Logged In..."
+    );
+    return res.status(STATUS_CODE.OK).json(response);
   });
 
   postRegister = asyncHandler(async (req, res) => {
@@ -72,6 +78,7 @@ class AuthController {
   });
 
   postUpdateUser = asyncHandler(async (req, res) => {
+    // validator is required!
     const { userId } = req.user;
     const { userName, email } = req.body;
     // if nothing is passed then return from here
@@ -98,6 +105,7 @@ class AuthController {
   });
 
   postRequestResetPassword = asyncHandler(async (req, res) => {
+    // validator not required
     const { email } = req.body;
     if (!email) {
       throw new CustomError(
@@ -112,6 +120,7 @@ class AuthController {
   });
 
   getResetPasswordTokenValidity = asyncHandler(async (req, res) => {
+    // validator not required
     const { token, userId } = req.query;
     if (!(token && userId)) {
       throw new CustomError(

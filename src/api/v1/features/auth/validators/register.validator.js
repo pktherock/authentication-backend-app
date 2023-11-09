@@ -1,7 +1,10 @@
 import { body, validationResult } from "express-validator";
-import STATUS_CODE from "../../../../../constants/statusCode.js";
+import asyncHandler from "express-async-handler";
 
-const registerValidator = async (req, res, next) => {
+import STATUS_CODE from "../../../../../constants/statusCode.js";
+import { CustomError } from "../../../../common/middlewares/error.middleware.js";
+
+const registerValidator = asyncHandler(async (req, res, next) => {
   const rules = [
     body("userName")
       .trim()
@@ -33,12 +36,12 @@ const registerValidator = async (req, res, next) => {
 
   // if error is there then isEmpty will give false
   if (!validationErrors.isEmpty()) {
-    return res
-      .status(STATUS_CODE.BAD_REQUEST)
-      .json({ success: false, error: validationErrors.array() });
+    // Get the first validation error from the array
+    const firstError = validationErrors.array()[0];
+    throw new CustomError(firstError.msg, STATUS_CODE.BAD_REQUEST);
   }
 
   return next();
-};
+});
 
 export default registerValidator;

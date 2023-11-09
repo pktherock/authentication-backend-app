@@ -35,8 +35,11 @@ const errorHandler = async (error, req, res, next) => {
   }
 
   const errResponse = {
+    success: false,
+    data: null,
     title: "",
-    message: error.message,
+    message: error.message || "Something went wrong",
+    // errors: "// todo"
   };
 
   switch (statusCode) {
@@ -53,14 +56,10 @@ const errorHandler = async (error, req, res, next) => {
       errResponse.title = "Permission Denied";
       break;
     case STATUS_CODE.CONFLICT:
-      errResponse.title = "Resource already exist with this info.";
+      errResponse.title = "Duplicate Resource";
       break;
     default:
-      if (error.code === 11000) {
-        errResponse.title = "Resource already exist with this info";
-      } else {
-        errResponse.title = "Internal Server Error";
-      }
+      errResponse.title = "Internal Server Error";
       break;
   }
 

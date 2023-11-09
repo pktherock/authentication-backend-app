@@ -1,8 +1,8 @@
-// Core modules
+//* Core modules
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-// third party modules
+//* third party modules
 // calling config function to have the access of env variable all over the app
 import "dotenv/config";
 import express from "express";
@@ -15,7 +15,7 @@ import MongoStore from "connect-mongo";
 import mongoose from "mongoose";
 import swaggerUI from "swagger-ui-express";
 
-// user defined modules
+//* user defined modules
 import config from "./config/config.js";
 import connectToMongoDB from "./config/db.config.js";
 import { authRouter } from "./api/v1/features/auth/index.js";
@@ -33,7 +33,7 @@ const app = express();
 //* database connection
 await connectToMongoDB(); // todo how can i write it inside async func
 
-// create Store for storing sessions
+//* create Store for storing sessions
 const store = MongoStore.create({
   client: mongoose.connection.getClient(),
   dbName: mongoose.connection.name,
@@ -42,7 +42,7 @@ const store = MongoStore.create({
   ttl: 15 * 60, // todo storing session for 15 min
 });
 
-// session configuration
+//* session configuration
 const { sessionSecret, sessionTimeOut } = config;
 app.use(
   session({
@@ -58,14 +58,14 @@ app.use(
   })
 );
 
-// making public folder to accessible from anywhere
+//* making public folder to accessible from anywhere
 app.use(express.static("public"));
 
-// this will help us to read req.body if coming request is in urlencoded or json format
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+//* this will help us to read req.body if coming request is in urlencoded or json format
+app.use(express.json({ limit: "17kb" }));
+app.use(express.urlencoded({ extended: true, limit: "17kb" }));
 
-// add cookie parser middleware to interact with cookies
+//* add cookie parser middleware to interact with cookies
 app.use(cookieParser());
 
 //* setting HTTP response headers.
@@ -74,7 +74,7 @@ app.use(helmet());
 //* compress all responses
 app.use(compression());
 
-// Enable trust proxy to trust X-Forwarded-For header
+//* Enable trust proxy to trust X-Forwarded-For header
 app.set("trust proxy", 1);
 
 const apiLimiter = rateLimit({
@@ -95,16 +95,16 @@ app.use(loggerMiddleware);
 // all auth routes
 app.use("/api/v1/auth", authRouter);
 
-// for api documentation using swagger.
+//* for api documentation using swagger.
 // ? Keeping swagger code at the end so that we can load swagger on "/" or "/api/v1/docs" route
 app.use(["/api/v1/docs", "/"], swaggerUI.serve);
 app.get(["/api/v1/docs", "/"], swaggerUI.setup(apiDocs));
 
-// Middleware to handle 405(not allowed) error
-// Api end point not found
+//* Middleware to handle 405(not allowed) error
+//* Api end point not found
 app.use("*", notFoundHandler);
 
-// always app level error handler will be last
+//* always app level error handler will be last
 app.use(errorHandler);
 
 export default app;

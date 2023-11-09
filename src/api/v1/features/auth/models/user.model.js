@@ -28,8 +28,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    profileImgUrl: {
-      url: String,
+    avatar: {
+      type: {
+        url: String,
+        localPath: String,
+      },
     },
     lastLoggedInAt: {
       type: Date,

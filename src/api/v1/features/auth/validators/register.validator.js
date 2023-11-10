@@ -33,8 +33,12 @@ const registerValidator = asyncHandler(async (req, res, next) => {
       .trim()
       .notEmpty()
       .withMessage("Password is required")
-      .isLength({ min: 6 })
-      .withMessage("password must be at least length of 6"),
+      .matches(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+      )
+      .withMessage(
+        "Minimum eight characters, at least one uppercase letter, one lowercase letter, one number and one special character:"
+      ),
   ];
 
   await Promise.all(rules.map((rule) => rule.run(req)));

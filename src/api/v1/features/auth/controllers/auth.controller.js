@@ -2,7 +2,6 @@ import asyncHandler from "express-async-handler";
 
 import { CustomError } from "../../../../common/middlewares/error.middleware.js";
 import destroySession from "../../../../../helpers/destroySession.js";
-import sendEmail from "../../../../../utils/sendEmail.js";
 import ApiResponse from "../../../../../utils/ApiResponse.js";
 import STATUS_CODE from "../../../../../constants/statusCode.js";
 import authService from "../services/auth.service.js";
@@ -40,33 +39,44 @@ class AuthController {
       password,
     });
 
-    // if you are creating Only API then return this
-    return res
-      .status(STATUS_CODE.CREATED)
-      .json({ message: "user created", user, verifyLink });
+    const response = new ApiResponse(
+      STATUS_CODE.CREATED,
+      { user, verifyLink },
+      "user created"
+    );
+
+    return res.status(STATUS_CODE.CREATED).json(response);
   });
 
   getUserVerificationStatus = asyncHandler(async (req, res) => {
     const { userId } = req.params;
     const isVerified = await authService.verificationStatus(userId);
 
-    return res.status(STATUS_CODE.OK).json({
-      success: true,
-      isVerified,
-    });
+    const response = new ApiResponse(
+      STATUS_CODE.OK,
+      { isVerified },
+      "User is not verified, please check your email"
+    );
+
+    return res.status(STATUS_CODE.OK).json(response);
   });
 
   postUserVerificationStatus = asyncHandler(async (req, res) => {
     const { userId } = req.params;
     const { token } = req.query;
-    console.log(token);
 
     if (!token) {
       throw new CustomError("token is required", STATUS_CODE.BAD_REQUEST);
     }
     const verifiedUser = await authService.verifyUser(userId, token);
 
-    return res.status(STATUS_CODE.OK).json(verifiedUser);
+    const response = new ApiResponse(
+      STATUS_CODE.OK,
+      verifiedUser,
+      "User verified successfully"
+    );
+
+    return res.status(STATUS_CODE.OK).json(response);
   });
 
   postLogoutUser = asyncHandler(async (req, res) => {
@@ -79,7 +89,13 @@ class AuthController {
     res.clearCookie("connect.sid");
     console.log("User logged out successfully.. ✅");
     console.log("Session destroyed successfully.. ✅");
-    return res.status(STATUS_CODE.OK).json({ message: "logout successfully" });
+
+    const response = new ApiResponse(
+      STATUS_CODE.OK,
+      null,
+      "logout successfully"
+    );
+    return res.status(STATUS_CODE.OK).json(response);
   });
 
   patchUpdateUser = asyncHandler(async (req, res) => {
@@ -99,7 +115,7 @@ class AuthController {
 
     // if nothing is passed then return from here
     // todo put this code inside validator
-    if (!(userName  || gender || avatar)) {
+    if (!(userName || gender || avatar)) {
       return res.status(STATUS_CODE.BAD_REQUEST).json({
         success: false,
         message: "Please provide username, gender, or image to update",
@@ -118,7 +134,13 @@ class AuthController {
 
     const updatedUser = await authService.updateUser(userId, updateInfo);
 
-    return res.status(STATUS_CODE.OK).json(updatedUser);
+    const response = new ApiResponse(
+      STATUS_CODE.OK,
+      updatedUser,
+      "User updated successfully"
+    );
+
+    return res.status(STATUS_CODE.OK).json(response);
   });
 
   postRequestResetPassword = asyncHandler(async (req, res) => {
@@ -133,7 +155,13 @@ class AuthController {
 
     const resetInfo = await authService.requestPasswordReset(email);
 
-    return res.status(STATUS_CODE.OK).json({ success: true, resetInfo });
+    const response = new ApiResponse(
+      STATUS_CODE.OK,
+      resetInfo,
+      "Reset password email sended successfully"
+    );
+
+    return res.status(STATUS_CODE.OK).json(response);
   });
 
   getResetPasswordTokenValidity = asyncHandler(async (req, res) => {
@@ -151,23 +179,31 @@ class AuthController {
       userId
     );
 
-    return res.status(STATUS_CODE.OK).json({ success: true, tokenValid });
+    const response = new ApiResponse(
+      STATUS_CODE.OK,
+      { tokenValid },
+      "Token validity fetched"
+    );
+
+    return res.status(STATUS_CODE.OK).json(response);
   });
 
   postResetPassword = asyncHandler(async (req, res) => {
     const { token, userId, otp, password } = req.body;
-    const success = await authService.resetPassword({
+    await authService.resetPassword({
       token,
       userId,
       otp,
       password,
     });
 
-    return res.status(STATUS_CODE.OK).json({
-      success,
-      message:
-        "Password reset was successful, please login with you new password",
-    });
+    const response = new ApiResponse(
+      STATUS_CODE.OK,
+      null,
+      "Password reset was successful, please login with you new password"
+    );
+
+    return res.status(STATUS_CODE.OK).json(response);
   });
 
   deleteUser = asyncHandler(async (req, res) => {
@@ -183,7 +219,13 @@ class AuthController {
     await destroySession(req);
     res.clearCookie("connect.sid");
 
-    return res.status(STATUS_CODE.OK).json(deletedUser);
+    const response = new ApiResponse(
+      STATUS_CODE.OK,
+      deletedUser,
+      "User deleted successfully"
+    );
+
+    return res.status(STATUS_CODE.OK).json(response);
   });
 
   postChangePassword = asyncHandler(async (req, res) => {
@@ -205,9 +247,13 @@ class AuthController {
     }
     await authService.changePassword(userId, password, newPassword, sessionId);
 
-    return res
-      .status(STATUS_CODE.OK)
-      .json({ success: true, message: "password updated successfully" });
+    const response = new ApiResponse(
+      STATUS_CODE.OK,
+      null,
+      "password updated successfully"
+    );
+
+    return res.status(STATUS_CODE.OK).json(response);
   });
 
   postChangeEmailRequest = asyncHandler(async (req, res) => {
@@ -222,11 +268,13 @@ class AuthController {
       email
     );
 
-    return res.status(STATUS_CODE.OK).json({
-      success: true,
-      message: "email update link has been sended to your new email id",
-      changeEmailLink,
-    });
+    const response = new ApiResponse(
+      STATUS_CODE.OK,
+      { changeEmailLink },
+      "email update link has been sended to your new email id"
+    );
+
+    return res.status(STATUS_CODE.OK).json(response);
   });
 
   postChangeEmail = asyncHandler(async (req, res) => {
@@ -240,11 +288,13 @@ class AuthController {
     }
     const updatedUser = await authService.changeEmail(userId, token, sessionId);
 
-    return res.status(STATUS_CODE.OK).json({
-      success: true,
-      message: "email updated successfully",
-      user: updatedUser,
-    });
+    const response = new ApiResponse(
+      STATUS_CODE.OK,
+      updatedUser,
+      "email updated successfully"
+    );
+
+    return res.status(STATUS_CODE.OK).json(response);
   });
 }
 

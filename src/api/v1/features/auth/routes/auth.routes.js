@@ -33,7 +33,11 @@ authRouter.post("/login", isLoggedIn, loginValidator, authController.postLogin);
 // note: important do not use get method to logout
 authRouter.post("/logout", authController.postLogoutUser);
 
-authRouter.patch("/update", jwtAuth, authController.postUpdateUser);
+authRouter.patch("/update", jwtAuth, authController.patchUpdateUser);
+
+authRouter.post("/change-password", jwtAuth, authController.postChangePassword);
+
+authRouter.post("/change-email", jwtAuth, authController.postChangeEmail);
 
 authRouter.post(
   "/request-reset-password",
@@ -47,13 +51,13 @@ authRouter.get(
   authController.getResetPasswordTokenValidity
 );
 
-authRouter.patch(
+authRouter.post(
   "/reset-password",
   canResetPassword,
   resetPasswordValidator,
   authController.postResetPassword
 );
 
-authRouter.delete("/delete-user", jwtAuth, authController.postDeleteUser);
+authRouter.delete("/delete-user", jwtAuth, authController.deleteUser);
 
 export default authRouter;

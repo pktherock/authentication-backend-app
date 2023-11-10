@@ -82,7 +82,7 @@ class AuthController {
     return res.status(STATUS_CODE.OK).json({ message: "logout successfully" });
   });
 
-  postUpdateUser = asyncHandler(async (req, res) => {
+  patchUpdateUser = asyncHandler(async (req, res) => {
     const { userId } = req.user;
     const { userName, gender } = req.body;
 
@@ -170,7 +170,7 @@ class AuthController {
     });
   });
 
-  postDeleteUser = asyncHandler(async (req, res) => {
+  deleteUser = asyncHandler(async (req, res) => {
     const { email } = req.user;
     const { password } = req.body;
     if (!password) {
@@ -184,6 +184,34 @@ class AuthController {
     res.clearCookie("connect.sid");
 
     return res.status(STATUS_CODE.OK).json(deletedUser);
+  });
+
+  postChangePassword = asyncHandler(async (req, res) => {
+    const { userId } = req.user;
+    const { password, newPassword } = req.body;
+    if (!(password && newPassword)) {
+      throw new CustomError(
+        "password and newPassword is required",
+        STATUS_CODE.BAD_REQUEST
+      );
+    }
+
+    if (password === newPassword) {
+      throw new CustomError(
+        "both password should not be same",
+        STATUS_CODE.BAD_REQUEST
+      );
+    }
+    await authService.changePassword(userId, password, newPassword);
+
+    return res
+      .status(STATUS_CODE.OK)
+      .json({ success: true, message: "password updated successfully" });
+  });
+
+  postChangeEmail = asyncHandler(async (req, res) => {
+    const { userId } = req.user;
+    const { email } = req.body;
   });
 }
 

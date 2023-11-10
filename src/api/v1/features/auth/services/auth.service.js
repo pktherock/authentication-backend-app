@@ -159,7 +159,7 @@ class AuthService {
     const isPassMatch = await decryptPassword(password, hashedPass);
 
     if (!isPassMatch) {
-      throw new CustomError("Invalid Credentials", STATUS_CODE.NOT_FOUND);
+      throw new CustomError("Invalid Credentials", STATUS_CODE.BAD_REQUEST);
     }
 
     if (!user.verified) {
@@ -222,8 +222,7 @@ class AuthService {
   };
 
   updateUser = async (userId, userInfo) => {
-    const { userName, email, gender } = userInfo;
-    // todo change update email flow
+    const { userName, gender } = userInfo;
 
     const prevUser = await User.findOne({
       $or: [{ email }, { userName }],
@@ -406,6 +405,32 @@ class AuthService {
 
     response.password = undefined;
     return response;
+  };
+
+  changePassword = async (userId, password, newPassword) => {
+    // find user
+    const user = await User.findOne({ _id: new ObjectId(userId) });
+
+    // check password
+    const isPasswordMatch = await decryptPassword(password, user.password);
+
+    if (!isPasswordMatch) {
+      throw new CustomError("Password is incorrect", STATUS_CODE.BAD_REQUEST);
+    }
+
+    // hash new password
+    const hashedPassword = await encryptPassword(newPassword);
+
+    // save new password
+    const update = await User.updateOne(
+      { _id: user._id },
+      {
+        password: hashedPassword,
+      }
+    );
+    console.log(update);
+
+    return true;
   };
 }
 

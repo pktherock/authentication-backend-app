@@ -4,7 +4,8 @@ import authController from "../controllers/auth.controller.js";
 import { loginValidator, registerValidator } from "../validators/index.js";
 import isLoggedIn from "../middlewares/isLoggedIn.js";
 import jwtAuth from "../../../middlewares/jwtAuth.middleware.js";
-import resetPassword from "../validators/resetPassword.validator.js";
+import { resetPasswordValidator } from "../validators/index.js";
+import canResetPassword from "../middlewares/canResetPassword.js";
 
 const authRouter = Router();
 
@@ -27,7 +28,6 @@ authRouter.post(
   authController.postUserVerificationStatus
 );
 
-
 authRouter.post("/login", isLoggedIn, loginValidator, authController.postLogin);
 
 // note: important do not use get method to logout
@@ -37,14 +37,20 @@ authRouter.patch("/update", jwtAuth, authController.postUpdateUser);
 
 authRouter.post(
   "/request-reset-password",
+  canResetPassword,
   authController.postRequestResetPassword
 );
 
-authRouter.get("/token-validate", authController.getResetPasswordTokenValidity);
+authRouter.get(
+  "/token-validate",
+  canResetPassword,
+  authController.getResetPasswordTokenValidity
+);
 
 authRouter.patch(
   "/reset-password",
-  resetPassword,
+  canResetPassword,
+  resetPasswordValidator,
   authController.postResetPassword
 );
 

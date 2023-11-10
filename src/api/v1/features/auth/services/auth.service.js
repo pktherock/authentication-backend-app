@@ -18,11 +18,18 @@ import {
   generateRefreshToken,
 } from "../../../../../helpers/token.js";
 import USER_ROLE from "../../../../../constants/userRole.js";
+import { removeLocalFile } from "../../../../../helpers/filePath.js";
+import sendEmail from "../../../../../utils/sendEmail.js";
+import generateRandomOtp from "../../../../../helpers/generateRandomOtp.js";
+import TOKEN_TYPE from "../../../../../constants/tokenType.js";
+
+// client url will be useful when we use react
+const { clientUrl } = config;
 
 class AuthService {
   createUser = async (userInfo) => {
     // 1. extract all info
-    const { userName, email, password } = userInfo;
+    const { userName, email, gender, password } = userInfo;
 
     // 2. check if user already exist with email id or userName
     const prevUser = await User.findOne({ $or: [{ email }, { userName }] });
@@ -36,16 +43,49 @@ class AuthService {
     const hashedPassword = await encryptPassword(password);
 
     // 3. create user object
-    const user = new User({ userName, email, password: hashedPassword });
-    user.role = USER_ROLE.DOCTOR;
+    const user = new User({
+      userName,
+      email,
+      gender,
+      password: hashedPassword,
+    });
+    user.role = USER_ROLE.USER;
 
     // 4. save user
     await user.save();
     // console.log("new User", user);
 
-    // 5. return user
+    // 5. send verification link
+    const verifyStr = randomBytes(32).toString("hex");
+    // hashing string
+    // this operation is same type of password hashing
+    const hashedStr = await encryptPassword(verifyStr);
+
+    // after 1 day min token will expire
+    const token = new Token({
+      userId: user._id,
+      token: hashedStr,
+      tokenType: TOKEN_TYPE.VERIFY_USER,
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hr
+    });
+
+    await token.save();
+
+    console.log("verify user token", token);
+
+    const verifyLink = `${clientUrl}/verify-user?token=${verifyStr}&userId=${user._id}`;
+    const mailContent = {
+      body: `<div>
+      <h1>Welcome to next generation Authentication app</h1>
+      <a href=${verifyLink}>Click here to verify</a>
+    </div>`,
+    };
+
+    sendEmail(user.email, "Registration Successful", mailContent);
+
+    // 6. return user
     user.password = undefined; // remove password filed while returning
-    return user;
+    return { user, verifyLink };
   };
 
   verificationStatus = async (userId) => {
@@ -60,7 +100,26 @@ class AuthService {
     return user.verified;
   };
 
-  verifyUser = async (userId) => {
+  verifyUser = async (userId, token) => {
+    // validate verify token
+    const verifyToken = await Token.findOne({
+      userId: new ObjectId(userId),
+      tokenType: TOKEN_TYPE.VERIFY_USER,
+    });
+
+    if (!verifyToken) {
+      throw new CustomError(
+        "verify token expired, please login again to get verification link",
+        STATUS_CODE.NOT_FOUND
+      );
+    }
+
+    const isTokenValid = await decryptPassword(token, verifyToken.token);
+
+    if (!isTokenValid) {
+      throw new CustomError("Invalid token", STATUS_CODE.BAD_REQUEST);
+    }
+
     const user = await User.findOneAndUpdate(
       {
         _id: userId,
@@ -75,8 +134,12 @@ class AuthService {
       throw new CustomError("No user found", STATUS_CODE.NOT_FOUND);
     }
 
+    await verifyToken.deleteOne();
+
     // user.verified = true;
     // await user.save();
+
+    user.password = undefined;
 
     return user;
   };
@@ -99,6 +162,53 @@ class AuthService {
       throw new CustomError("Invalid Credentials", STATUS_CODE.NOT_FOUND);
     }
 
+    if (!user.verified) {
+      // if token exists in db first delete that
+      const verifyToken = await Token.findOne({
+        userId: user._id,
+        tokenType: TOKEN_TYPE.VERIFY_USER,
+      });
+      console.log("token already valid and exists, check email");
+      if (!verifyToken) {
+        //  send verification link
+        const verifyStr = randomBytes(32).toString("hex");
+        // hashing string
+        // this operation is same type of password hashing
+        const hashedStr = await encryptPassword(verifyStr);
+
+        // after 1 day min token will expire
+        const token = new Token({
+          userId: user._id,
+          token: hashedStr,
+          tokenType: TOKEN_TYPE.VERIFY_USER,
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hr
+        });
+
+        await token.save();
+
+        console.log("verify user token", token);
+
+        const verifyLink = `${clientUrl}/verify-user?token=${verifyStr}&userId=${user._id}`;
+        const mailContent = {
+          body: `<div>
+      <h1>Welcome to next generation Authentication app</h1>
+      <a href=${verifyLink}>Click here to verify</a>
+    </div>`,
+        };
+
+        sendEmail(user.email, "Registration Successful", mailContent);
+      }
+      throw new CustomError(
+        "Please verify first to login",
+        STATUS_CODE.FORBIDDEN
+      );
+    }
+
+    // for now not useful
+    if (user.disable) {
+      throw new CustomError("Please contact admin", STATUS_CODE.FORBIDDEN);
+    }
+
     // generate access and refresh token and return it
     const payload = {
       userId: user._id.toString(),
@@ -112,7 +222,8 @@ class AuthService {
   };
 
   updateUser = async (userId, userInfo) => {
-    const { userName, email } = userInfo;
+    const { userName, email, gender } = userInfo;
+    // todo change update email flow
 
     const prevUser = await User.findOne({
       $or: [{ email }, { userName }],
@@ -123,12 +234,24 @@ class AuthService {
     if (prevUser) {
       throw new CustomError("User already exist", STATUS_CODE.CONFLICT);
     }
+    // console.log(userInfo);
+    // if user is updating avatar
+    // if avatar is present in user document, then delete it from local server
+    if (userInfo.avatar) {
+      const currentUserAvatar = await User.findOne(
+        { _id: userId },
+        { avatar: 1 }
+      );
+      console.log("user avatar info:", currentUserAvatar);
+
+      removeLocalFile(currentUserAvatar.avatar.localPath);
+    }
 
     // update user
     const updatedUser = await User.findOneAndUpdate(
       { _id: new ObjectId(userId) },
-      { $set: userInfo },
-      { new: true }
+      { ...userInfo },
+      { new: true, runValidators: true }
     );
 
     // delete password while returning
@@ -140,43 +263,58 @@ class AuthService {
 
   requestPasswordReset = async (email) => {
     const user = await User.findOne({ email });
-    // if (!user) throw new Error('Email does not exist');
     if (!user) {
       throw new CustomError("Email does not exist", STATUS_CODE.NOT_FOUND);
     }
 
     // if token is already there first delete token
-    let token = await Token.findOne({ userId: user._id });
+    let token = await Token.findOne({
+      userId: user._id,
+      tokenType: TOKEN_TYPE.RESET_PASSWORD,
+    });
     if (token) await Token.deleteOne();
 
     const resetStr = randomBytes(32).toString("hex");
     // hashing string
-    // this operation same type of password hashing
-    const hash = await encryptPassword(resetStr);
+    // this operation is same type of password hashing
+    const hashedStr = await encryptPassword(resetStr);
 
+    // requirement is to implement otp based password reset
+    const resetOtp = generateRandomOtp().toString();
+    // hashing otp
+    // this operation same type of password hashing
+    const hashedOtp = await encryptPassword(resetOtp);
+
+    // after 30 min token will expire
     token = new Token({
       userId: user._id,
-      token: hash,
+      token: hashedStr,
+      tokenType: TOKEN_TYPE.RESET_PASSWORD,
+      otp: hashedOtp,
+      expiresAt: new Date(Date.now() + 30 * 60 * 1000), // 30 min
     });
 
     await token.save();
 
     console.log("Reset password token", token);
 
-    // client url will be useful when we use react
-    const { clientUrl } = config;
     const resetPasswordLink = `${clientUrl}/password-reset?token=${resetStr}&id=${user._id}`;
     console.log(resetPasswordLink);
 
+    const mailContent = {
+      body: `<h1>Password reset link</h1> <p>Otp: ${resetOtp}</p> <a href=${resetPasswordLink}>Click here to set password</a>`,
+    };
     // send email with link
+    sendEmail(email, "Forgot Password", mailContent);
 
-    return resetPasswordLink;
+    return { resetPasswordLink, otp: resetOtp };
   };
 
   isResetPasswordTokenValid = async (token, userId) => {
     // check if token exist into DB
     const passwordResetToken = await Token.findOne({
       userId: new ObjectId(userId),
+      tokenType: TOKEN_TYPE.RESET_PASSWORD,
     });
 
     if (!passwordResetToken) {
@@ -187,23 +325,24 @@ class AuthService {
     }
 
     // compare token with DB token
-    const isValid = await decryptPassword(token, passwordResetToken.token);
+    const isTokenValid = await decryptPassword(token, passwordResetToken.token);
 
-    if (!isValid) {
+    if (!isTokenValid) {
       throw new CustomError(
         "Invalid or token does'nt match",
         STATUS_CODE.NOT_FOUND
       );
     }
 
-    return isValid;
+    return isTokenValid;
   };
 
   resetPassword = async (resetInfo) => {
-    const { token, userId, password } = resetInfo;
+    const { token, userId, otp, password } = resetInfo;
     // check if token exist into DB
     const passwordResetToken = await Token.findOne({
       userId: new ObjectId(userId),
+      tokenType: TOKEN_TYPE.RESET_PASSWORD,
     });
 
     if (!passwordResetToken) {
@@ -214,11 +353,14 @@ class AuthService {
     }
 
     // compare token with DB token
-    const isValid = await decryptPassword(token, passwordResetToken.token);
+    const isTokenValid = await decryptPassword(token, passwordResetToken.token);
 
-    if (!isValid) {
+    // compare otp with DB Otp
+    const isOtpValid = await decryptPassword(otp, passwordResetToken.otp);
+
+    if (!(isTokenValid && isOtpValid)) {
       throw new CustomError(
-        "Invalid or token does'nt match",
+        "Invalid OTP or token does'nt match",
         STATUS_CODE.NOT_FOUND
       );
     }
@@ -228,9 +370,12 @@ class AuthService {
 
     await User.updateOne(
       { _id: new ObjectId(userId) },
-      { $set: { password: hashedPass } },
+      { password: hashedPass },
       { new: true }
     );
+
+    // delete token
+    await passwordResetToken.deleteOne();
     return true;
   };
 

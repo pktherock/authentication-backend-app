@@ -1,6 +1,7 @@
 import STATUS_CODE from "../../../constants/statusCode.js";
 import conf from "../../../config/config.js";
 import winston from "winston";
+import { removeUnusedMulterImageFileOnError } from "../../../helpers/index.js";
 
 export class CustomError extends Error {
   constructor(message, statusCode) {
@@ -58,6 +59,9 @@ const errorHandler = async (error, req, res, next) => {
     case STATUS_CODE.CONFLICT:
       errResponse.title = "Duplicate Resource";
       break;
+    case STATUS_CODE.NOT_ALLOWED:
+      errResponse.title = "Operation not allowed";
+      break;
     default:
       errResponse.title = "Internal Server Error";
       break;
@@ -78,6 +82,8 @@ const errorHandler = async (error, req, res, next) => {
 
     logger.error(logData);
   }
+
+  removeUnusedMulterImageFileOnError(req);
   return res.status(statusCode).json(errResponse);
 };
 

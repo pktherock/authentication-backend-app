@@ -31,20 +31,19 @@ class AuthController {
   });
 
   postRegister = asyncHandler(async (req, res) => {
-    const { userName, email, password } = req.body;
+    const { userName, email, gender, password } = req.body;
 
-    const newUser = await authService.createUser({ userName, email, password });
-
-    sendEmail(
-      newUser.email,
-      "Registration Successful",
-      "Welcome to next generation employee review system app"
-    );
+    const { user, verifyLink } = await authService.createUser({
+      userName,
+      email,
+      gender,
+      password,
+    });
 
     // if you are creating Only API then return this
     return res
       .status(STATUS_CODE.CREATED)
-      .json({ message: "user created", user: newUser });
+      .json({ message: "user created", user, verifyLink });
   });
 
   getUserVerificationStatus = asyncHandler(async (req, res) => {
@@ -59,7 +58,13 @@ class AuthController {
 
   postUserVerificationStatus = asyncHandler(async (req, res) => {
     const { userId } = req.params;
-    const verifiedUser = await authService.verifyUser(userId);
+    const { token } = req.query;
+    console.log(token);
+
+    if (!token) {
+      throw new CustomError("token is required", STATUS_CODE.BAD_REQUEST);
+    }
+    const verifiedUser = await authService.verifyUser(userId, token);
 
     return res.status(STATUS_CODE.OK).json(verifiedUser);
   });
@@ -78,18 +83,30 @@ class AuthController {
   });
 
   postUpdateUser = asyncHandler(async (req, res) => {
-    // validator is required!
     const { userId } = req.user;
-    const { userName, email } = req.body;
-    // if nothing is passed then return from here
-    if (!(userName || email)) {
-      throw new CustomError(
-        "userName or email is required to update",
-        STATUS_CODE.BAD_REQUEST
-      );
+    const { userName, gender } = req.body;
+
+    let avatar;
+    if (req.file) {
+      // extract file info and create one object with imageUrl and localPath
+      const image = req.file;
+      const imageUrl = getStaticFilePath(req, image.filename);
+      const imageLocalPath = getLocalPath(image.filename);
+      avatar = { url: imageUrl, localPath: imageLocalPath };
+      req.body.avatar = avatar;
+      console.log("This is a avatar:", avatar);
     }
 
-    const updateInfo = { userName, email };
+    // if nothing is passed then return from here
+    // todo put this code inside validator
+    if (!(userName || email || gender || avatar)) {
+      return res.status(STATUS_CODE.BAD_REQUEST).json({
+        success: false,
+        message: "Please provide username, gender, or image to update",
+      });
+    }
+
+    const updateInfo = { userName, email, gender, avatar };
 
     Object.keys(updateInfo).forEach((key) => {
       // todo utils
@@ -99,9 +116,9 @@ class AuthController {
       }
     });
 
-    const updateUser = await authService.updateUser(userId, updateInfo);
+    const updatedUser = await authService.updateUser(userId, updateInfo);
 
-    return res.status(STATUS_CODE.OK).json(updateUser);
+    return res.status(STATUS_CODE.OK).json(updatedUser);
   });
 
   postRequestResetPassword = asyncHandler(async (req, res) => {
@@ -114,9 +131,9 @@ class AuthController {
       );
     }
 
-    const resetLink = await authService.requestPasswordReset(email);
+    const resetInfo = await authService.requestPasswordReset(email);
 
-    return res.status(STATUS_CODE.OK).json({ success: true, resetLink });
+    return res.status(STATUS_CODE.OK).json({ success: true, resetInfo });
   });
 
   getResetPasswordTokenValidity = asyncHandler(async (req, res) => {
@@ -138,10 +155,11 @@ class AuthController {
   });
 
   postResetPassword = asyncHandler(async (req, res) => {
-    const { token, userId, password } = req.body;
+    const { token, userId, otp, password } = req.body;
     const success = await authService.resetPassword({
       token,
       userId,
+      otp,
       password,
     });
 

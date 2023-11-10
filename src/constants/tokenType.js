@@ -1,0 +1,13 @@
+const TOKEN_TYPE = {
+  VERIFY_USER: "VERIFY_USER",
+  RESET_PASSWORD: "RESET_PASSWORD",
+  RESET_EMAIL: "RESET_EMAIL",
+};
+
+Object.freeze(TOKEN_TYPE);
+
+const TOKEN_TYPES = Object.keys(TOKEN_TYPE);
+
+export { TOKEN_TYPES };
+
+export default TOKEN_TYPE;

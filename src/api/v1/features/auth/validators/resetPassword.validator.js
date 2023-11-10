@@ -4,9 +4,10 @@ import asyncHandler from "express-async-handler";
 import STATUS_CODE from "../../../../../constants/statusCode.js";
 import { CustomError } from "../../../../common/middlewares/error.middleware.js";
 
-const resetPassword = asyncHandler(async (req, res, next) => {
+const resetPasswordValidator = asyncHandler(async (req, res, next) => {
   const rules = [
     body("token").trim().notEmpty().withMessage("token is required"),
+    body("otp").trim().notEmpty().withMessage("otp is required"),
     body("userId").trim().notEmpty().withMessage("userId is required"),
     body("password").trim().notEmpty().withMessage("Password is required"),
   ];
@@ -25,4 +26,4 @@ const resetPassword = asyncHandler(async (req, res, next) => {
   return next();
 });
 
-export default resetPassword;
+export default resetPasswordValidator;

@@ -1,4 +1,6 @@
-const USER_ROLE = {};
+const USER_ROLE = {
+  USER: "USER",
+};
 
 Object.freeze(USER_ROLE);
 

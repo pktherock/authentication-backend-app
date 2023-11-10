@@ -4,7 +4,7 @@ import config from "../config/config.js";
 
 const { emailUser, emailPass } = config;
 
-const sendEmail = async (emailId, subject, text) => {
+const sendEmail = async (emailId, subject, { text, body }) => {
   // Create email transporter
   const transporter = createTransport({
     service: "gmail",
@@ -16,11 +16,11 @@ const sendEmail = async (emailId, subject, text) => {
 
   // Configure email options
   const mailOptions = {
-    from: "magician codingninjas2k16@gmail.com",
+    from: "magician pktherock00@gmail.com",
     to: emailId,
     subject: subject,
     text: text, // for plain txt
-    // html: body, // for html
+    html: body, // for html
   };
 
   // Send the email

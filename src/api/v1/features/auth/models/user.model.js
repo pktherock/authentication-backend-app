@@ -1,5 +1,13 @@
 import mongoose from "mongoose";
 
+const avatarSchema = new mongoose.Schema(
+  {
+    url: String,
+    localPath: String,
+  },
+  { _id: false }
+);
+
 const userSchema = new mongoose.Schema(
   {
     userName: {
@@ -28,11 +36,14 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    avatar: {
-      type: {
-        url: String,
-        localPath: String,
+    avatar: avatarSchema,
+    gender: {
+      type: String,
+      enum: {
+        values: ["M", "F", "O"],
+        message: "gender should be either M, F, O",
       },
+      required: true,
     },
     lastLoggedInAt: {
       type: Date,

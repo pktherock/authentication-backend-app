@@ -15,6 +15,7 @@ import config from "../../../../../config/config.js";
 
 import {
   generateAccessToken,
+  generateChangeEmailToken,
   generateRefreshToken,
 } from "../../../../../helpers/token.js";
 import USER_ROLE from "../../../../../constants/userRole.js";
@@ -22,6 +23,7 @@ import { removeLocalFile } from "../../../../../helpers/filePath.js";
 import sendEmail from "../../../../../utils/sendEmail.js";
 import generateRandomOtp from "../../../../../helpers/generateRandomOtp.js";
 import TOKEN_TYPE from "../../../../../constants/tokenType.js";
+import { jwtChangeEmailDecode } from "../../../../../helpers/tokenDecode.js";
 
 // client url will be useful when we use react
 const { clientUrl } = config;
@@ -209,6 +211,10 @@ class AuthService {
       throw new CustomError("Please contact admin", STATUS_CODE.FORBIDDEN);
     }
 
+    // updating last logged in time
+    user.lastLoggedInAt = Date.now();
+    await user.save();
+
     // generate access and refresh token and return it
     const payload = {
       userId: user._id.toString(),
@@ -263,7 +269,8 @@ class AuthService {
   requestPasswordReset = async (email) => {
     const user = await User.findOne({ email });
     if (!user) {
-      throw new CustomError("Email does not exist", STATUS_CODE.NOT_FOUND);
+      // throw new CustomError("Email does not exist", STATUS_CODE.NOT_FOUND);
+      return { resetPasswordLink: null, otp: null }
     }
 
     // if token is already there first delete token
@@ -271,7 +278,7 @@ class AuthService {
       userId: user._id,
       tokenType: TOKEN_TYPE.RESET_PASSWORD,
     });
-    if (token) await Token.deleteOne();
+    if (token) await token.deleteOne();
 
     const resetStr = randomBytes(32).toString("hex");
     // hashing string
@@ -392,6 +399,7 @@ class AuthService {
       );
     }
 
+    //! todo
     // if found correct delete that user
     const response = await user.deleteOne();
     // console.log("Deleted User Info", response)
@@ -407,7 +415,7 @@ class AuthService {
     return response;
   };
 
-  changePassword = async (userId, password, newPassword) => {
+  changePassword = async (userId, password, newPassword, currentSessionId) => {
     // find user
     const user = await User.findOne({ _id: new ObjectId(userId) });
 
@@ -421,16 +429,116 @@ class AuthService {
     // hash new password
     const hashedPassword = await encryptPassword(newPassword);
 
-    // save new password
+    // save new password and update password updated at
     const update = await User.updateOne(
       { _id: user._id },
       {
         password: hashedPassword,
+        passwordUpdatedAt: Date.now(),
       }
     );
     console.log(update);
 
+    // delete all sessions except current session
+    // find session with user id
+    const query = {
+      "session.userId": user._id.toString(),
+      _id: { $ne: currentSessionId }, // Exclude the current session
+    };
+
+    // if found then delete user session
+    const allSessions = await Session.deleteMany(query);
+    console.log("Deleted Sessions Info", allSessions);
+
     return true;
+  };
+
+  sendChangeEmailLink = async (userId, email) => {
+    const user = await User.findOne({ _id: new ObjectId(userId) });
+
+    await Token.findOneAndDelete({
+      userId: new ObjectId(userId),
+      tokenType: TOKEN_TYPE.RESET_EMAIL,
+    });
+
+    const currentEmail = user.email;
+
+    const payload = {
+      fromEmail: currentEmail,
+      toEmail: email,
+    };
+    const encodedToken = generateChangeEmailToken(payload);
+
+    const token = new Token({
+      userId,
+      token: encodedToken,
+      tokenType: TOKEN_TYPE.RESET_EMAIL,
+      expiresAt: new Date(Date.now() + 15 * 60 * 1000), // 15 min
+    });
+
+    await token.save();
+
+    const changeLink = `${clientUrl}/change-email?token=${encodedToken}&userId=${userId}`;
+
+    // send mail
+    const mailContent = {
+      body: `<h1>Email reset link</h1> <a href=${changeLink}>Click here to set password</a>`,
+    };
+    // send email with link
+    sendEmail(email, "Email Change", mailContent);
+
+    return changeLink;
+  };
+
+  changeEmail = async (userId, changeEmailToken, currentSessionId) => {
+    // check user
+    const user = await User.findOne({ _id: new ObjectId(userId) });
+
+    if (!user) {
+      throw new CustomError("User not found", STATUS_CODE.NOT_FOUND);
+    }
+
+    // find token
+    const token = await Token.findOne({
+      userId: new ObjectId(userId),
+      tokenType: TOKEN_TYPE.RESET_EMAIL,
+      token: changeEmailToken,
+    });
+
+    if (!token) {
+      throw new CustomError("token Expired or invalid", STATUS_CODE.NOT_FOUND);
+    }
+
+    // extract value from token
+    const decodeToken = jwtChangeEmailDecode(token.token);
+    console.log("Change email info", decodeToken);
+    const targetEmail = decodeToken.toEmail;
+
+    // change email
+    const updatedUser = await User.findOneAndUpdate(
+      { _id: user._id },
+      {
+        email: targetEmail,
+      },
+      { new: true, runValidators: true }
+    );
+    updatedUser.password = undefined;
+
+    await token.deleteOne();
+
+    // delete all sessions except current session
+    // find session with user id
+    const query = {
+      "session.userId": user._id.toString(),
+      _id: { $ne: currentSessionId }, // Exclude the current session
+    };
+
+    // if found then delete user session
+    const allSessions = await Session.deleteMany(query);
+    // console.log("Deleted Sessions Info", allSessions);
+
+    // return changed user info
+    return updatedUser;
   };
 }
 

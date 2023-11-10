@@ -99,14 +99,14 @@ class AuthController {
 
     // if nothing is passed then return from here
     // todo put this code inside validator
-    if (!(userName || email || gender || avatar)) {
+    if (!(userName  || gender || avatar)) {
       return res.status(STATUS_CODE.BAD_REQUEST).json({
         success: false,
         message: "Please provide username, gender, or image to update",
       });
     }
 
-    const updateInfo = { userName, email, gender, avatar };
+    const updateInfo = { userName, gender, avatar };
 
     Object.keys(updateInfo).forEach((key) => {
       // todo utils
@@ -189,6 +189,7 @@ class AuthController {
   postChangePassword = asyncHandler(async (req, res) => {
     const { userId } = req.user;
     const { password, newPassword } = req.body;
+    const sessionId = req.sessionID;
     if (!(password && newPassword)) {
       throw new CustomError(
         "password and newPassword is required",
@@ -202,16 +203,48 @@ class AuthController {
         STATUS_CODE.BAD_REQUEST
       );
     }
-    await authService.changePassword(userId, password, newPassword);
+    await authService.changePassword(userId, password, newPassword, sessionId);
 
     return res
       .status(STATUS_CODE.OK)
       .json({ success: true, message: "password updated successfully" });
   });
 
-  postChangeEmail = asyncHandler(async (req, res) => {
+  postChangeEmailRequest = asyncHandler(async (req, res) => {
     const { userId } = req.user;
     const { email } = req.body;
+    if (!email) {
+      throw new CustomError("email is required", STATUS_CODE.BAD_REQUEST);
+    }
+
+    const changeEmailLink = await authService.sendChangeEmailLink(
+      userId,
+      email
+    );
+
+    return res.status(STATUS_CODE.OK).json({
+      success: true,
+      message: "email update link has been sended to your new email id",
+      changeEmailLink,
+    });
+  });
+
+  postChangeEmail = asyncHandler(async (req, res) => {
+    const { token, userId } = req.body;
+    const sessionId = req.sessionID;
+    if (!(token && userId)) {
+      throw new CustomError(
+        "token and userId is required",
+        STATUS_CODE.BAD_REQUEST
+      );
+    }
+    const updatedUser = await authService.changeEmail(userId, token, sessionId);
+
+    return res.status(STATUS_CODE.OK).json({
+      success: true,
+      message: "email updated successfully",
+      user: updatedUser,
+    });
   });
 }
 

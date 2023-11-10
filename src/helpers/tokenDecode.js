@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import config from "../config/config.js";
 
-const { jwtAccessSecret, jwtRefreshSecret } = config;
+const { jwtAccessSecret, jwtRefreshSecret, jwtChangeEmailSecret } = config;
 
 const jwtAccessDecode = (token) => {
   try {
@@ -21,4 +21,13 @@ const jwtRefreshDecode = (token) => {
   }
 };
 
-export { jwtAccessDecode, jwtRefreshDecode };
+const jwtChangeEmailDecode = (token) => {
+  try {
+    const payload = jwt.verify(token, jwtChangeEmailSecret);
+    return payload;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export { jwtAccessDecode, jwtRefreshDecode, jwtChangeEmailDecode };

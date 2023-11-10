@@ -37,7 +37,13 @@ authRouter.patch("/update", jwtAuth, authController.patchUpdateUser);
 
 authRouter.post("/change-password", jwtAuth, authController.postChangePassword);
 
-authRouter.post("/change-email", jwtAuth, authController.postChangeEmail);
+authRouter.post(
+  "/change-email-request",
+  jwtAuth,
+  authController.postChangeEmailRequest
+);
+
+authRouter.post("/change-email", authController.postChangeEmail);
 
 authRouter.post(
   "/request-reset-password",

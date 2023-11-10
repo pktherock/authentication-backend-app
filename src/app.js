@@ -55,6 +55,7 @@ app.use(
       maxAge: sessionTimeOut,
     },
     store: store,
+    genid: (req) => new mongoose.Types.ObjectId().toString()
   })
 );
 

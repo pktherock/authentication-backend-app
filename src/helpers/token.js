@@ -6,6 +6,7 @@ const {
   jwtRefreshSecret,
   jwtAccessTimeOut,
   jwtRefreshTimeOut,
+  jwtChangeEmailSecret,
 } = config;
 
 const generateAccessToken = (payload) => {
@@ -23,4 +24,12 @@ const generateRefreshToken = (payload) => {
   return token;
 };
 
-export { generateAccessToken, generateRefreshToken };
+const generateChangeEmailToken = (payload) => {
+  const token = jwt.sign(payload, jwtChangeEmailSecret, {
+    expiresIn: "15m", // 15 min
+  });
+
+  return token;
+};
+
+export { generateAccessToken, generateRefreshToken, generateChangeEmailToken };

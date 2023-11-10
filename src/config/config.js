@@ -15,6 +15,7 @@ const {
   MONGO_USER_PASSWORD,
   DB_NAME,
   CLIENT_URL,
+  CHANGE_EMAIL_SECRET
 } = process.env;
 
 const config = {
@@ -34,6 +35,7 @@ const config = {
   mongoUserPass: String(MONGO_USER_PASSWORD),
   dbName: String(DB_NAME),
   clientUrl: String(CLIENT_URL), // will user react very soon
+  jwtChangeEmailSecret: String(CHANGE_EMAIL_SECRET)
 };
 
 Object.freeze(config);

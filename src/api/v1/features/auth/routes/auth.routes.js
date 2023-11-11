@@ -6,6 +6,7 @@ import isLoggedIn from "../middlewares/isLoggedIn.js";
 import jwtAuth from "../../../middlewares/jwtAuth.middleware.js";
 import { resetPasswordValidator } from "../validators/index.js";
 import canResetPassword from "../middlewares/canResetPassword.js";
+import { fileUpload } from "../../../../common/index.js";
 
 const authRouter = Router();
 
@@ -33,7 +34,12 @@ authRouter.post("/login", isLoggedIn, loginValidator, authController.postLogin);
 // note: important do not use get method to logout
 authRouter.post("/logout", authController.postLogoutUser);
 
-authRouter.patch("/update", jwtAuth, authController.patchUpdateUser);
+authRouter.patch(
+  "/update",
+  jwtAuth,
+  fileUpload.single("profileImg"),
+  authController.patchUpdateUser
+);
 
 authRouter.post("/change-password", jwtAuth, authController.postChangePassword);
 

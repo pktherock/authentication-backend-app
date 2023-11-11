@@ -5,6 +5,10 @@ import destroySession from "../../../../../helpers/destroySession.js";
 import ApiResponse from "../../../../../utils/ApiResponse.js";
 import STATUS_CODE from "../../../../../constants/statusCode.js";
 import authService from "../services/auth.service.js";
+import {
+  getLocalPath,
+  getStaticFilePath,
+} from "../../../../../helpers/filePath.js";
 
 class AuthController {
   postLogin = asyncHandler(async (req, res) => {

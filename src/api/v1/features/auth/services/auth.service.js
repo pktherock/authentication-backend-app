@@ -231,7 +231,7 @@ class AuthService {
     const { userName, gender } = userInfo;
 
     const prevUser = await User.findOne({
-      $or: [{ email }, { userName }],
+      userName,
       _id: { $ne: new ObjectId(userId) }, // Exclude the current user by their ID
     });
     // console.log("Prev User", prevUser);
@@ -248,8 +248,9 @@ class AuthService {
         { avatar: 1 }
       );
       console.log("user avatar info:", currentUserAvatar);
-
-      removeLocalFile(currentUserAvatar.avatar.localPath);
+      if (currentUserAvatar.avatar) {
+        removeLocalFile(currentUserAvatar.avatar?.localPath);
+      }
     }
 
     // update user
@@ -270,7 +271,7 @@ class AuthService {
     const user = await User.findOne({ email });
     if (!user) {
       // throw new CustomError("Email does not exist", STATUS_CODE.NOT_FOUND);
-      return { resetPasswordLink: null, otp: null }
+      return { resetPasswordLink: null, otp: null };
     }
 
     // if token is already there first delete token

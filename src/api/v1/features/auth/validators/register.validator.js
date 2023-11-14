@@ -21,14 +21,7 @@ const registerValidator = asyncHandler(async (req, res, next) => {
       .withMessage("Email is required")
       .isEmail()
       .withMessage("Email is invalid"),
-
-    body("gender")
-      .trim()
-      .notEmpty()
-      .withMessage("gender is required")
-      .isIn(["M", "F"])
-      .withMessage("gender should be M, F, O"),
-
+      
     body("password")
       .trim()
       .notEmpty()

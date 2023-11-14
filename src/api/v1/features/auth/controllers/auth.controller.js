@@ -23,23 +23,21 @@ class AuthController {
     req.session.refreshToken = refreshToken;
     req.session.userId = userId;
 
-    // if you are creating Only API then return this
-
     const response = new ApiResponse(
       STATUS_CODE.OK,
       token,
       "Successfully Logged In..."
     );
+
     return res.status(STATUS_CODE.OK).json(response);
   });
 
   postRegister = asyncHandler(async (req, res) => {
-    const { userName, email, gender, password } = req.body;
+    const { userName, email, password } = req.body;
 
     const { user, verifyLink } = await authService.createUser({
       userName,
       email,
-      gender,
       password,
     });
 
@@ -104,7 +102,7 @@ class AuthController {
 
   patchUpdateUser = asyncHandler(async (req, res) => {
     const { userId } = req.user;
-    const { userName, gender } = req.body;
+    const { userName, gender, phoneNumber, dateOfBirth } = req.body;
 
     let avatar;
     if (req.file) {
@@ -119,18 +117,18 @@ class AuthController {
 
     // if nothing is passed then return from here
     // todo put this code inside validator
-    if (!(userName || gender || avatar)) {
-      return res.status(STATUS_CODE.BAD_REQUEST).json({
-        success: false,
-        message: "Please provide username, gender, or image to update",
-      });
+    if (!(userName || gender || phoneNumber || dateOfBirth || avatar)) {
+      throw new CustomError(
+        "Please provide userName, gender, phoneNumber or imageUrl to update",
+        STATUS_CODE.BAD_REQUEST
+      );
     }
 
-    const updateInfo = { userName, gender, avatar };
+    const updateInfo = { userName, gender, phoneNumber, dateOfBirth, avatar };
 
     Object.keys(updateInfo).forEach((key) => {
       // todo utils
-      if (req.body[key] === undefined) {
+      if (req.body[key] === undefined || req.body[key] === "") {
         // If the value is undefined, delete the key from req.body
         delete updateInfo[key];
       }
@@ -148,7 +146,6 @@ class AuthController {
   });
 
   postRequestResetPassword = asyncHandler(async (req, res) => {
-    // validator not required
     const { email } = req.body;
     if (!email) {
       throw new CustomError(
@@ -169,7 +166,6 @@ class AuthController {
   });
 
   getResetPasswordTokenValidity = asyncHandler(async (req, res) => {
-    // validator not required
     const { token, userId } = req.query;
     if (!(token && userId)) {
       throw new CustomError(
@@ -291,6 +287,8 @@ class AuthController {
       );
     }
     const updatedUser = await authService.changeEmail(userId, token, sessionId);
+    // destroy current session as well
+    await destroySession(req);
 
     const response = new ApiResponse(
       STATUS_CODE.OK,

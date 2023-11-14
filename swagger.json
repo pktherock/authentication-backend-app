@@ -65,6 +65,75 @@
         }
       }
     },
+    "/auth/verify-user/{userId}": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "summary": " Verify user to get token",
+        "description": "This API endpoint is to verify user with userId and token",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "User id to verify user"
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "Token to verify user"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Validation Error"
+          },
+          "401": {
+            "description": "Incorrect Credentials"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "summary": " Verify user status",
+        "description": "This API endpoint is to verify user status",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "User id to verify user"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Validation Error"
+          },
+          "401": {
+            "description": "Incorrect Credentials"
+          }
+        }
+      }
+    },
     "/auth/login": {
       "post": {
         "tags": [
@@ -138,19 +207,39 @@
             "JWT": {}
           }
         ],
-        "summary": "update username and email",
-        "description": "This API endpoint is to update user name and email",
+        "summary": "update userName, gender, phoneNumber, dateOfBirth and avatar",
+        "description": "This API endpoint is to update user profile",
         "requestBody": {
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
                 "type": "object",
                 "properties": {
-                  "email": {
-                    "type": "string"
-                  },
                   "userName": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 5,
+                    "maxLength": 25
+                  },
+                  "profileImg": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "gender": {
+                    "type": "string",
+                    "enum": [
+                      "M",
+                      "F",
+                      "O"
+                    ]
+                  },
+                  "phoneNumber": {
+                    "type": "string",
+                    "minLength": 10,
+                    "maxLength": 10
+                  },
+                  "dateOfBirth": {
+                    "type": "string",
+                    "format": "date"
                   }
                 }
               }
@@ -186,7 +275,10 @@
                   "email": {
                     "type": "string"
                   }
-                }
+                },
+                "required": [
+                  "email"
+                ]
               }
             }
           }
@@ -245,7 +337,7 @@
       }
     },
     "/auth/reset-password": {
-      "patch": {
+      "post": {
         "tags": [
           "User"
         ],
@@ -263,6 +355,9 @@
                   "userId": {
                     "type": "string"
                   },
+                  "otp": {
+                    "type": "string"
+                  },
                   "password": {
                     "type": "string"
                   }
@@ -270,6 +365,7 @@
                 "required": [
                   "token",
                   "userId",
+                  "otp",
                   "password"
                 ]
               }
@@ -289,6 +385,125 @@
         }
       }
     },
+    "/auth/change-email-request": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Request change email",
+        "description": "This API endpoint is to request change email",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "email"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/auth/change-email": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Change email",
+        "description": "This API endpoint is to change email",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string"
+                  },
+                  "userId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "token",
+                  "userId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/auth/change-password": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Change email",
+        "description": "This API endpoint is to change email",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "password": {
+                    "type": "string"
+                  },
+                  "newPassword": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "password",
+                  "newPassword"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
     "/auth/delete-user": {
       "delete": {
         "tags": [
@@ -301,6 +516,24 @@
         ],
         "summary": "delete user feature",
         "description": "This API endpoint is to user info from portal",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "password": {
+                    "type": "string",
+                    "format": "password"
+                  }
+                },
+                "required": [
+                  "password"
+                ]
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK"

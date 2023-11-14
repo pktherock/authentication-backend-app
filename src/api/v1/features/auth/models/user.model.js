@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-
 const avatarSchema = new mongoose.Schema(
   {
     url: String,
@@ -36,15 +35,14 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    avatar: avatarSchema,
     gender: {
       type: String,
       enum: {
         values: ["M", "F", "O"],
-        message: "gender should be either M, F, O",
-      },
-      required: true,
+        message: "Gender should be either M , F, O",
+      }
     },
+    avatar: avatarSchema,
     lastLoggedInAt: {
       type: Date,
     },
@@ -64,6 +62,20 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    phoneNumber: {
+      type: String,
+      trim: true,
+      minLength: 10,
+      maxLength: 10,
+      validate: {
+        validator: function (v) {
+          return /^([987]{1})(\d{1})(\d{8})/.test(v);
+        },
+        message: (props) => `${props.value} is not a valid phone number`,
+      },
+      unique: true,
+    },
+    dateOfBirth: String,
   },
   { timestamps: true }
 );

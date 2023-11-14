@@ -31,10 +31,12 @@ const { clientUrl } = config;
 class AuthService {
   createUser = async (userInfo) => {
     // 1. extract all info
-    const { userName, email, gender, password } = userInfo;
+    const { userName, email, password } = userInfo;
 
     // 2. check if user already exist with email id or userName
-    const prevUser = await User.findOne({ $or: [{ email }, { userName }] });
+    const prevUser = await User.findOne({
+      $or: [{ email }, { userName }],
+    });
     // console.log("Prev User", prevUser);
 
     if (prevUser) {
@@ -48,10 +50,8 @@ class AuthService {
     const user = new User({
       userName,
       email,
-      gender,
       password: hashedPassword,
     });
-    user.role = USER_ROLE.USER;
 
     // 4. save user
     await user.save();
@@ -161,7 +161,7 @@ class AuthService {
     const isPassMatch = await decryptPassword(password, hashedPass);
 
     if (!isPassMatch) {
-      throw new CustomError("Invalid Credentials", STATUS_CODE.BAD_REQUEST);
+      throw new CustomError("Invalid Credentials", STATUS_CODE.NOT_FOUND);
     }
 
     if (!user.verified) {
@@ -201,7 +201,7 @@ class AuthService {
         sendEmail(user.email, "Registration Successful", mailContent);
       }
       throw new CustomError(
-        "Please verify first to login",
+        "Please verify first to login, verification link has been sended to your email id",
         STATUS_CODE.FORBIDDEN
       );
     }
@@ -228,7 +228,7 @@ class AuthService {
   };
 
   updateUser = async (userId, userInfo) => {
-    const { userName, gender } = userInfo;
+    const { userName } = userInfo;
 
     const prevUser = await User.findOne({
       userName,
@@ -248,8 +248,9 @@ class AuthService {
         { avatar: 1 }
       );
       console.log("user avatar info:", currentUserAvatar);
+
       if (currentUserAvatar.avatar) {
-        removeLocalFile(currentUserAvatar.avatar?.localPath);
+        removeLocalFile(currentUserAvatar.avatar.localPath);
       }
     }
 
@@ -377,7 +378,7 @@ class AuthService {
 
     await User.updateOne(
       { _id: new ObjectId(userId) },
-      { password: hashedPass },
+      { password: hashedPass, passwordUpdatedAt: Date.now() },
       { new: true }
     );
 
@@ -390,20 +391,19 @@ class AuthService {
     // find user in DB with email id
     const user = await User.findOne({ email });
 
+    if (!user) {
+      throw new CustomError("User does not exist", STATUS_CODE.NOT_FOUND);
+    }
+
     const isPasswordValid = await decryptPassword(password, user.password);
 
     // match the password
     if (!(user && isPasswordValid)) {
-      throw new CustomError(
-        "Token or password is not valid",
-        STATUS_CODE.BAD_REQUEST
-      );
+      throw new CustomError("password is not valid", STATUS_CODE.BAD_REQUEST);
     }
-
-    //! todo
     // if found correct delete that user
-    const response = await user.deleteOne();
-    // console.log("Deleted User Info", response)
+    const response = await User.findOneAndDelete({ _id: user._id });
+    console.log("Deleted User Info", response);
 
     // find session with user id
     const query = { "session.userId": response._id.toString() };
@@ -531,7 +531,7 @@ class AuthService {
     // find session with user id
     const query = {
       "session.userId": user._id.toString(),
-      _id: { $ne: currentSessionId }, // Exclude the current session
+      _id: { $ne: currentSessionId }, // if required Exclude the current session
     };
 
     // if found then delete user session

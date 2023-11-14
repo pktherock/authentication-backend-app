@@ -8,8 +8,8 @@ const connectToMongoDB = async () => {
     await mongoose.connect(mongoUri, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      // user: mongoUser, // todo: uncomment it while deploying
-      // pass: mongoUserPass, // todo: uncomment it while deploying
+      user: mongoUser, // todo: uncomment it while deploying
+      pass: mongoUserPass, // todo: uncomment it while deploying
       dbName: dbName,
     });
     console.log(`Connected to the ${mongoose.connection.name} database`);

@@ -392,6 +392,11 @@
         ],
         "summary": "Request change email",
         "description": "This API endpoint is to request change email",
+        "security": [
+          {
+            "JWT": {}
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -470,6 +475,11 @@
         ],
         "summary": "Change email",
         "description": "This API endpoint is to change email",
+        "security": [
+          {
+            "JWT": {}
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {

@@ -1,5 +1,11 @@
+import { CustomError } from "../api/common/index.js";
+import STATUS_CODE from "../constants/statusCode.js";
+
 // get all whitelisted domains
-const whitelist = ["https://angular-node-auth.vercel.app"];
+const whitelist = [
+  "https://angular-node-auth.vercel.app",
+  "http://localhost:4200",
+];
 
 const corsOptions = {
   origin: function (origin, callback) {
@@ -7,7 +13,7 @@ const corsOptions = {
     if (whitelist.indexOf(origin) !== -1 || !origin) {
       callback(null, true);
     } else {
-      callback(new Error("Not allowed by CORS"));
+      callback(new CustomError("Not allowed by CORS", STATUS_CODE.NOT_ALLOWED));
     }
   },
 };

@@ -3,6 +3,7 @@ const whitelist = ["https://angular-node-auth.vercel.app"];
 
 const corsOptions = {
   origin: function (origin, callback) {
+    console.log("origin", origin);
     if (whitelist.indexOf(origin) !== -1 || !origin) {
       callback(null, true);
     } else {

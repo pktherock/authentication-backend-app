@@ -57,7 +57,7 @@ app.use(
       maxAge: sessionTimeOut,
     },
     store: store,
-    genid: (req) => new mongoose.Types.ObjectId().toString()
+    genid: (req) => new mongoose.Types.ObjectId().toString(),
   })
 );
 
@@ -65,7 +65,7 @@ app.use(
 app.use(express.static("public"));
 
 // cors configuration
-app.use(cors(corsOptions))
+app.use(cors(corsOptions));
 
 //* this will help us to read req.body if coming request is in urlencoded or json format
 app.use(express.json({ limit: "17kb" }));

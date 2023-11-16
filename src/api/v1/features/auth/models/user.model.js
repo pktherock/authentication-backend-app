@@ -67,13 +67,14 @@ const userSchema = new mongoose.Schema(
       trim: true,
       minLength: 10,
       maxLength: 10,
+      unique: true, // Enforce uniqueness when phoneNumber is provided
+      sparse: true, // Allows multiple documents to have a null value for phoneNumber
       validate: {
         validator: function (v) {
-          return /^([987]{1})(\d{1})(\d{8})/.test(v);
+          return /^([987]{1})(\d{1})(\d{8})$/.test(v);
         },
         message: (props) => `${props.value} is not a valid phone number`,
       },
-      unique: true,
     },
     dateOfBirth: String,
   },

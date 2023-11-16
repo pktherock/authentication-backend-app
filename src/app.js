@@ -14,9 +14,11 @@ import compression from "compression";
 import MongoStore from "connect-mongo";
 import mongoose from "mongoose";
 import swaggerUI from "swagger-ui-express";
+import cors from "cors";
 
 //* user defined modules
 import config from "./config/config.js";
+import corsOptions from "./config/cors.config.js";
 import connectToMongoDB from "./config/db.config.js";
 import { authRouter } from "./api/v1/features/auth/index.js";
 import {
@@ -61,6 +63,9 @@ app.use(
 
 //* making public folder to accessible from anywhere
 app.use(express.static("public"));
+
+// cors configuration
+app.use(cors(corsOptions))
 
 //* this will help us to read req.body if coming request is in urlencoded or json format
 app.use(express.json({ limit: "17kb" }));

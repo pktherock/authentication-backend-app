@@ -57,7 +57,7 @@ class AuthController {
     const response = new ApiResponse(
       STATUS_CODE.OK,
       { isVerified },
-      "User is not verified, please check your email"
+      "User verification"
     );
 
     return res.status(STATUS_CODE.OK).json(response);

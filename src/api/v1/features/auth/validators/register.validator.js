@@ -30,7 +30,7 @@ const registerValidator = asyncHandler(async (req, res, next) => {
         /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
       )
       .withMessage(
-        "Minimum eight characters, at least one uppercase letter, one lowercase letter, one number and one special character:"
+        "Password : Minimum eight characters, at least one uppercase letter, one lowercase letter, one number and one special character:"
       ),
   ];
 

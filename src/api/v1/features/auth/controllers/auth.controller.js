@@ -43,7 +43,7 @@ class AuthController {
       {
         accessToken,
         refreshToken,
-        user,
+        userInfo: user,
       },
       "User info fetched"
     );

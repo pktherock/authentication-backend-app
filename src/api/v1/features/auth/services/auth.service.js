@@ -230,7 +230,7 @@ class AuthService {
 
     user.password = undefined;
 
-    return { accessToken, refreshToken, user };
+    return { accessToken, refreshToken, userInfo: user };
   };
 
   updateUser = async (userId, userInfo) => {

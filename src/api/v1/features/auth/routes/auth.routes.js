@@ -31,6 +31,8 @@ authRouter.post(
 
 authRouter.post("/login", isLoggedIn, loginValidator, authController.postLogin);
 
+authRouter.get("/validate-session", jwtAuth, authController.getUserSession);
+
 // note: important do not use get method to logout
 authRouter.post("/logout", authController.postLogoutUser);
 

@@ -17,16 +17,35 @@ class AuthController {
     const token = await authService.loginUser({ email, password });
 
     // set access token and refresh token in session
-    const { accessToken, refreshToken, userId } = token;
+    const { accessToken, refreshToken, user } = token;
 
     req.session.accessToken = accessToken;
     req.session.refreshToken = refreshToken;
-    req.session.userId = userId;
+    req.session.userId = user._id.toString();
 
     const response = new ApiResponse(
       STATUS_CODE.OK,
       token,
       "Successfully Logged In..."
+    );
+
+    return res.status(STATUS_CODE.OK).json(response);
+  });
+
+  getUserSession = asyncHandler(async (req, res) => {
+    const { userId } = req.user;
+    const { accessToken, refreshToken } = req.session;
+
+    const user = await authService.getUserInfo(userId);
+
+    const response = new ApiResponse(
+      STATUS_CODE.OK,
+      {
+        accessToken,
+        refreshToken,
+        user,
+      },
+      "User info fetched"
     );
 
     return res.status(STATUS_CODE.OK).json(response);

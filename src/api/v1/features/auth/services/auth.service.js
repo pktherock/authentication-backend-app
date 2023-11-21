@@ -90,6 +90,10 @@ class AuthService {
     return { user, verifyLink };
   };
 
+  getUserInfo = async (userId) => {
+    return await User.findOne({ _id: new ObjectId(userId) });
+  };
+
   verificationStatus = async (userId) => {
     const user = await User.findOne({
       _id: userId,
@@ -224,7 +228,9 @@ class AuthService {
     const accessToken = generateAccessToken(payload);
     const refreshToken = generateRefreshToken(payload);
 
-    return { accessToken, refreshToken, userId: user._id.toString() };
+    user.password = undefined;
+
+    return { accessToken, refreshToken, user };
   };
 
   updateUser = async (userId, userInfo) => {

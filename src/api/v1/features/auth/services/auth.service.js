@@ -75,7 +75,7 @@ class AuthService {
 
     console.log("verify user token", token);
 
-    const verifyLink = `${clientUrl}/verify-user?token=${verifyStr}&userId=${user._id}`;
+    const verifyLink = `${clientUrl}/auth/verify-user?token=${verifyStr}&userId=${user._id}`;
     const mailContent = {
       body: `<div>
       <h1>Welcome to next generation Authentication app</h1>
@@ -194,7 +194,7 @@ class AuthService {
 
         console.log("verify user token", token);
 
-        const verifyLink = `${clientUrl}/verify-user?token=${verifyStr}&userId=${user._id}`;
+        const verifyLink = `${clientUrl}/auth/verify-user?token=${verifyStr}&userId=${user._id}`;
         const mailContent = {
           body: `<div>
       <h1>Welcome to next generation Authentication app</h1>

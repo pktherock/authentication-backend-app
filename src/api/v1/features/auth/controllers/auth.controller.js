@@ -84,7 +84,7 @@ class AuthController {
 
   postUserVerificationStatus = asyncHandler(async (req, res) => {
     const { userId } = req.params;
-    const { token } = req.query;
+    const { token } = req.body;
 
     if (!token) {
       throw new CustomError("token is required", STATUS_CODE.BAD_REQUEST);

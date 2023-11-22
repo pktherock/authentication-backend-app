@@ -49,7 +49,7 @@ Image for better understanding
 6. express-async-handler
    -> To wrap controller function so that if any error comes it will next function with the error automatically
 7. express-rate-limit
-   -> To prevent or limit repeated requests to our APIs (a normal user can not send more than 60 request per second)
+   -> To prevent or limit repeated requests to our APIs (a normal user can not send more than 60 requests per second)
 8. express-session
    -> To manage Sessions
 9. express-validator
@@ -61,7 +61,7 @@ Image for better understanding
 12. nodemailer
     -> To send email
 13. winston
-    -> It helps us to log the req or res in a very easy way
+    -> It helps us to log the req or res in a straightforward way
 14. mongoose
     -> to interact with mongodb
 15. connect-mongo
@@ -89,4 +89,4 @@ Note:
 
 ### Live Demo Link
 
-[Live Demo Link]() will be updated soon
+[Live Demo Link](https://authentication-backend-app.onrender.com)

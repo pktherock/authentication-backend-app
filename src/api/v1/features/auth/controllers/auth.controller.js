@@ -17,11 +17,11 @@ class AuthController {
     const token = await authService.loginUser({ email, password });
 
     // set access token and refresh token in session
-    const { accessToken, refreshToken, user } = token;
+    const { accessToken, refreshToken, userInfo } = token;
 
     req.session.accessToken = accessToken;
     req.session.refreshToken = refreshToken;
-    req.session.userId = user._id.toString();
+    req.session.userId = userInfo._id.toString();
 
     const response = new ApiResponse(
       STATUS_CODE.OK,

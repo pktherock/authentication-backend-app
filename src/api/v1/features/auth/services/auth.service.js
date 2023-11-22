@@ -312,7 +312,7 @@ class AuthService {
 
     console.log("Reset password token", token);
 
-    const resetPasswordLink = `${clientUrl}/password-reset?token=${resetStr}&id=${user._id}`;
+    const resetPasswordLink = `${clientUrl}/auth/password-reset?token=${resetStr}&id=${user._id}`;
     console.log(resetPasswordLink);
 
     const mailContent = {

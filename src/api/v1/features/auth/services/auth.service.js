@@ -485,7 +485,7 @@ class AuthService {
 
     await token.save();
 
-    const changeLink = `${clientUrl}/change-email?token=${encodedToken}&userId=${userId}`;
+    const changeLink = `${clientUrl}/auth/change-email?token=${encodedToken}&userId=${userId}`;
 
     // send mail
     const mailContent = {

@@ -93,7 +93,7 @@ class AuthController {
 
     const response = new ApiResponse(
       STATUS_CODE.OK,
-      verifiedUser,
+      { userInfo: verifiedUser },
       "User verified successfully"
     );
 

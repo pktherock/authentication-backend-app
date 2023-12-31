@@ -5,6 +5,7 @@ import STATUS_CODE from "../constants/statusCode.js";
 const whitelist = [
   "https://angular-node-auth.vercel.app",
   "http://localhost:4200",
+  "http://localhost:3000",
 ];
 
 const corsOptions = {

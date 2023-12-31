@@ -4,6 +4,7 @@ import STATUS_CODE from "../constants/statusCode.js";
 // get all whitelisted domains
 const whitelist = [
   "https://angular-node-auth.vercel.app",
+  "https://authentication-backend-app.onrender.com",
   "http://localhost:4200",
   "http://localhost:3000",
 ];
